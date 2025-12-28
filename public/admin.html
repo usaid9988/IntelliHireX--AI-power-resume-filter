@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin Dashboard — IntelliHireX</title>
+
+<style>
+:root{
+  --bg:#071029;
+  --panel:#0b1220;
+  --accent:#4f8cff;
+  --muted:#9aa6bf;
+  --success:#22c55e;
+  --danger:#ef4444;
+  --radius:14px;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,Arial;
+  background:linear-gradient(180deg,#071029,#061127);
+  color:#e6eef9;
+}
+
+.wrap{
+  max-width:1100px;
+  margin:0 auto;
+  padding:28px;
+}
+
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:26px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-weight:800;
+  font-size:22px;
+  color:var(--accent);
+}
+
+.logo{
+  width:44px;height:44px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,var(--accent),#2d6ee6);
+  color:#fff;
+  font-weight:900;
+}
+
+.logout{
+  padding:10px 16px;
+  border-radius:999px;
+  border:none;
+  background:rgba(239,68,68,0.15);
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+  transition:.2s;
+}
+.logout:hover{background:rgba(239,68,68,0.3)}
+
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));
+  border-radius:18px;
+  padding:24px;
+  box-shadow:0 20px 60px rgba(2,6,23,0.7);
+}
+
+.card h2{
+  margin:0 0 16px;
+  font-size:22px;
+}
+
+.subtitle{
+  color:var(--muted);
+  font-size:14px;
+  margin-bottom:20px;
+}
+
+.list{
+  display:grid;
+  gap:14px;
+}
+
+.item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.03);
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.item:hover{
+  transform:translateY(-4px);
+  box-shadow:0 14px 40px rgba(0,0,0,0.5);
+}
+
+.meta{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.meta strong{font-size:16px}
+.meta span{font-size:14px;color:var(--muted)}
+
+.badge{
+  display:inline-block;
+  margin-top:6px;
+  font-size:12px;
+  padding:4px 10px;
+  border-radius:999px;
+  background:rgba(79,140,255,0.15);
+  color:var(--accent);
+  font-weight:700;
+  width:max-content;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+}
+
+.btn{
+  padding:10px 16px;
+  border-radius:10px;
+  border:none;
+  font-weight:700;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.approve{
+  background:linear-gradient(90deg,#22c55e,#16a34a);
+  color:#022c22;
+}
+.approve:hover{opacity:.9}
+
+.empty{
+  padding:40px;
+  text-align:center;
+  color:var(--muted);
+  font-size:15px;
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">IH</div>
+      Admin Dashboard
+    </div>
+    <button class="logout" onclick="logout()">Logout</button>
+  </header>
+
+  <div class="card">
+    <h2>Recruiter Approval Requests</h2>
+    <div class="subtitle">
+      Review company applications and approve verified recruiters.
+    </div>
+
+    <div id="list" class="list">
+      <div class="empty">Loading requests…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "http://localhost:5000/api/admin";
+const token = localStorage.getItem("token");
+
+if(!token){
+  alert("Login first");
+  window.location="login.html";
+}
+
+function logout(){
+  localStorage.clear();
+  window.location="index.html";
+}
+
+async function loadRecruiters(){
+  try{
+    const res = await fetch(`${API}/pending-recruiters`, {
+      headers:{ Authorization:"Bearer "+token }
+    });
+
+    if(!res.ok) throw new Error("Unauthorized");
+
+    const users = await res.json();
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    if(!users.length){
+      list.innerHTML = `<div class="empty">🎉 No pending approvals</div>`;
+      return;
+    }
+
+    users.forEach(u=>{
+      const el = document.createElement("div");
+      el.className="item";
+      el.innerHTML=`
+        <div class="meta">
+          <strong>${u.name}</strong>
+          <span>${u.email}</span>
+          <span class="badge">${u.company || "No company provided"}</span>
+        </div>
+        <div class="actions">
+          <button class="btn approve" onclick="approve('${u._id}')">Approve</button>
+        </div>
+      `;
+      list.appendChild(el);
+    });
+
+  }catch(err){
+    document.getElementById("list").innerHTML =
+      `<div class="empty">❌ ${err.message}</div>`;
+  }
+}
+
+async function approve(id){
+  await fetch(`${API}/approve/${id}`,{
+    method:"PUT",
+    headers:{ Authorization:"Bearer "+token }
+  });
+  loadRecruiters();
+}
+
+loadRecruiters();
+</script>
+</body>
+</html>

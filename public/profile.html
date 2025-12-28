@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Profile — IntelliHireX</title>
+  <meta name="description" content="User profile — IntelliHireX" />
+  <style>
+    :root{--bg:#071029;--card:linear-gradient(180deg,#071229,#071529);--accent:#4f8cff;--muted:#9aa6bf;--max-width:1000px;--radius:12px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#071029,#061127);color:#e6eef9}
+    .wrap{max-width:var(--max-width);margin:0 auto;padding:24px}
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#2d6ee6);display:grid;place-items:center;color:white;font-weight:800}
+    .btn{padding:8px 12px;border-radius:10px;border:none;cursor:pointer;background:transparent;color:var(--muted)}
+    .card{background:var(--card);padding:22px;border-radius:12px;box-shadow:0 20px 60px rgba(2,6,23,0.6)}
+    .profile-grid{display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:start}
+    .avatar{width:100%;max-width:180px;height:180px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:56px;color:#fff;font-weight:900;background:linear-gradient(135deg,var(--accent),#2d6ee6);transition:transform .28s ease}
+    .avatar:hover{transform:translateY(-6px) rotate(-1deg)}
+    .meta h2{margin:0 0 6px 0}
+    .meta p{margin:0;color:var(--muted)}
+    .item{display:flex;justify-content:space-between;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:rgba(255,255,255,0.01)}
+    .chip{background:rgba(79,140,255,0.12);color:var(--accent);padding:8px 10px;border-radius:999px;font-weight:700}
+    .center{text-align:center;color:var(--muted);padding:28px}
+    .reveal{opacity:0;transform:translateY(12px);transition:opacity .6s ease, transform .6s cubic-bezier(.2,.9,.3,1)}
+    .reveal.visible{opacity:1;transform:none}
+    @media (max-width:780px){.profile-grid{grid-template-columns:1fr;text-align:center}.item{flex-direction:column;align-items:flex-start}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="logo">IH</div>
+        <div style="font-weight:800;color:var(--accent)">IntelliHireX</div>
+      </div>
+      <nav>
+        <a class="btn" href="dashboard.html">Dashboard</a>
+        <a class="btn" href="upload.html">Submit Resume</a>
+      </nav>
+    </header>
+
+    <main>
+      <h1 style="margin:0 0 12px 0">My Profile</h1>
+
+      <section class="card reveal" id="profileCard" aria-live="polite">
+        <div id="loading" class="center">Loading profile…</div>
+        <div id="error" class="center" style="display:none;color:#ffb4b4"></div>
+
+        <div id="profile" style="display:none">
+          <div class="profile-grid">
+            <div>
+              <div id="avatar" class="avatar">A</div>
+
+              <div style="margin-top:14px">
+                <div style="color:var(--muted);font-size:13px">Account actions</div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button id="editBtn" class="btn" style="opacity:.6;pointer-events:none">Edit</button>
+                  <button id="logoutBtn" class="btn" style="background:linear-gradient(90deg,var(--accent),#2d6ee6);color:white;border-radius:10px;padding:8px 12px">Logout</button>
+                  <button id="refreshBtn" class="btn">Refresh</button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="meta">
+                <h2 id="displayName">Account</h2>
+                <p id="displayEmail" style="color:var(--muted)">—</p>
+              </div>
+
+              <div style="margin-top:18px;display:grid;gap:10px">
+                <div class="item"><div style="color:var(--muted)">User ID</div><div id="userId">—</div></div>
+                <div class="item"><div style="color:var(--muted)">Joined</div><div id="joinedAt">—</div></div>
+                <div class="item"><div style="color:var(--muted)">Role</div><div id="role">—</div></div>
+              </div>
+
+              <div style="margin-top:18px">
+                <div style="color:var(--muted);font-size:13px">Skills</div>
+                <div id="skillsList" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
+              </div>
+
+              <div style="margin-top:18px">
+                <pre id="rawJson" style="margin-top:8px;max-height:220px;overflow:auto;padding:12px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      const apiBase = 'http://localhost:5000';
+      const endpoints = ['/api/auth/me','/api/auth/profile','/api/users/me','/api/me'];
+      const token = localStorage.getItem('token');
+
+      const loadingEl = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const profileEl = document.getElementById('profile');
+      const rawJsonEl = document.getElementById('rawJson');
+
+      if(!token){ loadingEl.style.display='none'; errorEl.style.display='block'; errorEl.textContent='Not signed in. Please sign in.'; return; }
+
+      const displayName = document.getElementById('displayName');
+      const displayEmail = document.getElementById('displayEmail');
+      const userId = document.getElementById('userId');
+      const joinedAt = document.getElementById('joinedAt');
+      const roleEl = document.getElementById('role');
+      const skillsList = document.getElementById('skillsList');
+      const avatarEl = document.getElementById('avatar');
+
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('token'); localStorage.removeItem('username'); window.location='index.html';
+      });
+      document.getElementById('refreshBtn').addEventListener('click', fetchProfile);
+
+      async function fetchProfile(){
+        loadingEl.style.display=''; errorEl.style.display='none'; profileEl.style.display='none'; rawJsonEl.textContent='';
+
+        for(const ep of endpoints){
+          try{
+            const res = await fetch(apiBase + ep, { headers: { 'Authorization': "Bearer " + token } });
+            if(!res.ok) continue;
+            const data = await res.json();
+            if(!data) continue;
+
+            try{ const storeName = data.name || data.username || data.email || (data.user && (data.user.name || data.user.email)); if(storeName) localStorage.setItem('username', storeName); }catch(e){}
+
+            const profile = normalize(data);
+            populate(profile, data);
+            const c = document.getElementById('profileCard'); setTimeout(()=> c.classList.add('visible'), 40);
+            return;
+          }catch(e){}
+        }
+        loadingEl.style.display='none'; errorEl.style.display='block'; errorEl.textContent='Unable to load profile. Please refresh or sign in again.';
+      }
+
+      function normalize(data){
+        const base = data.user || data;
+        return {
+          name: base.name || base.username || base.fullName || base.displayName || '',
+          email: base.email || '',
+          id: base.id || base._id || base.userId || '',
+          createdAt: base.created_at || base.createdAt || base.joined || '',
+          role: base.role || base.roles || '',
+          skills: base.skills || data.skills || []
+        };
+      }
+
+      function populate(profile, raw){
+        loadingEl.style.display='none'; profileEl.style.display='';
+        const display = profile.name || profile.email || 'Account';
+        displayName.textContent = display;
+        displayEmail.textContent = profile.email || '—';
+        userId.textContent = profile.id || '—';
+        joinedAt.textContent = profile.createdAt ? new Date(profile.createdAt).toLocaleString() : '—';
+        roleEl.textContent = profile.role || '—';
+        avatarEl.textContent = display[0] ? display[0].toUpperCase() : 'A';
+
+        skillsList.innerHTML = '';
+        if(Array.isArray(profile.skills) && profile.skills.length){
+          profile.skills.forEach(s => {
+            const d = document.createElement('div'); d.className='chip'; d.textContent = s; skillsList.appendChild(d);
+          });
+        } else {
+          skillsList.innerHTML = '<div style="color:var(--muted)">No skills listed</div>';
+        }
+      }
+
+      fetchProfile();
+    })();
+  </script>
+</body>
+</html>

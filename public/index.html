@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IntelliHireX | AI Recruitment Platform</title>
+  <meta name="description" content="AI-powered resume screening and candidate ranking." />
+
+  <style>
+    :root{
+      --bg:#0f1724;
+      --panel:#0b1220;
+      --accent:#4f8cff;
+      --muted:#9aa6bf;
+      --glass:rgba(255,255,255,0.04);
+      --radius:12px;
+      --max-width:1200px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      color:#e6eef9;
+      background:linear-gradient(180deg,#071029 0%, #071029 65%, #07112b 100%);
+    }
+
+    .wrap{max-width:var(--max-width);margin:0 auto;padding:28px}
+    header{display:flex;justify-content:space-between;align-items:center}
+    .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--accent);font-weight:800}
+    .logo{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--accent),#2d6ee6);color:white;font-weight:900}
+
+    nav{display:flex;gap:12px;align-items:center}
+    .btn{
+      padding:10px 14px;
+      border-radius:10px;
+      font-weight:700;
+      text-decoration:none;
+      background:transparent;
+      color:var(--muted);
+      border:1px solid transparent;
+      transition:.2s;
+      cursor:pointer;
+    }
+    .btn:hover{transform:translateY(-3px);color:#fff}
+    .btn-primary{
+      background:linear-gradient(90deg,var(--accent),#2d6ee6);
+      color:white;
+      box-shadow:0 10px 30px rgba(79,140,255,.2);
+    }
+
+    .auth-name{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.03);
+      color:white;
+      text-decoration:none;
+    }
+    .avatar{
+      width:32px;height:32px;border-radius:50%;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--accent),#2d6ee6);
+      font-weight:800;
+    }
+
+    .hero{display:grid;grid-template-columns:1fr 460px;gap:28px;margin-top:36px}
+    .hero-card{
+      background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));
+      padding:28px;border-radius:16px;
+      box-shadow:0 12px 40px rgba(2,6,23,.6);
+      transition:.35s;
+    }
+    .hero-card:hover{transform:translateY(-6px)}
+
+    h1{font-size:34px;margin:0 0 12px}
+    p.lead{color:var(--muted);line-height:1.5}
+
+    .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+
+    .recruiter-btn{
+      border:1px solid rgba(79,140,255,.45);
+      background:rgba(79,140,255,.08);
+      color:#cfe3ff;
+    }
+    .recruiter-btn:hover{
+      background:rgba(79,140,255,.18);
+    }
+
+    .feature-grid{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+    .feature{
+      padding:12px;border-radius:12px;
+      background:rgba(255,255,255,.02);
+      min-width:160px;
+      transition:.25s;
+    }
+    .feature:hover{transform:translateY(-6px)}
+
+    footer{margin-top:60px;text-align:center;color:var(--muted);font-size:13px}
+    @media(max-width:980px){.hero{grid-template-columns:1fr}}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="index.html">
+      <div class="logo">IH</div>
+      <div>IntelliHireX</div>
+    </a>
+
+    <nav>
+      <a class="btn" href="upload.html">Submit Resume</a>
+      <a class="btn btn-primary" href="dashboard.html" id="rankBtn">View Rankings</a>
+      <div id="authContainer"></div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <div class="hero-card">
+          <h1>AI-powered resume screening for smarter hiring</h1>
+          <p class="lead">
+            Automatically extract skills, evaluate fit against roles, and rank candidates with transparent scoring.
+          </p>
+
+          <div class="cta">
+            <a class="btn btn-primary" href="upload.html">Submit Resume</a>
+            <a class="btn" href="dashboard.html">Explore Rankings</a>
+            <a class="btn recruiter-btn" id="applyRecruiterBtn" href="apply-recruiter.html">
+              Apply as Recruiter
+            </a>
+          </div>
+
+          <div class="feature-grid">
+            <div class="feature"><strong>Automated evaluation</strong></div>
+            <div class="feature"><strong>Ranked candidates</strong></div>
+            <div class="feature"><strong>Role-based security</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="hero-card">
+        <h3>Live demo</h3>
+        <p class="lead">Upload a resume to see extraction, scoring, and ranking in action.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="upload.html">Upload</a>
+          <a class="btn" href="login.html">Sign Out</a>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer>© 2025 IntelliHireX · Built for modern recruitment teams</footer>
+</div>
+
+<script>
+/* PROFILE / AUTH UI */
+(function(){
+  const auth = document.getElementById("authContainer");
+  const token = localStorage.getItem("token");
+
+  if(!token){
+    auth.innerHTML = `<a class="btn" href="login.html">Sign in</a>`;
+    return;
+  }
+
+  fetch("/api/auth/me",{headers:{Authorization:"Bearer "+token}})
+    .then(r=>r.json())
+    .then(u=>{
+      const name = u.name || "Account";
+      auth.innerHTML = `
+        <a class="auth-name" href="profile.html">
+          <span class="avatar">${name[0].toUpperCase()}</span>${name}
+        </a>
+        <button class="btn" id="logoutBtn">Logout</button>
+      `;
+      document.getElementById("logoutBtn").onclick=()=>{
+        localStorage.clear();
+        location.reload();
+      };
+
+      if(u.role !== "admin"){
+        document.getElementById("rankBtn").style.display="none";
+      }
+      if(u.role === "recruiter"){
+        document.getElementById("applyRecruiterBtn").style.display="none";
+      }
+    });
+})();
+</script>
+
+</body>
+</html>

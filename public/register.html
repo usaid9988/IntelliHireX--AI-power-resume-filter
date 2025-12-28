@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Register — IntelliHireX</title>
+<style>
+:root{--accent:#4f8cff;--muted:#9aa6bf}
+body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#071029,#061127);display:flex;align-items:center;justify-content:center;height:100vh;color:#e6eef9}
+.panel{max-width:520px;width:100%;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;box-shadow:0 18px 60px rgba(2,6,23,0.6)}
+input{width:100%;padding:12px;margin:8px 0;border-radius:10px;background:transparent;color:#e6eef9;border:1px solid rgba(255,255,255,0.04)}
+button{width:100%;padding:12px;margin-top:12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),#2d6ee6);color:white;cursor:pointer;}
+.notice{background:rgba(79,140,255,0.08);border-left:4px solid var(--accent);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px;color:#cfe3ff;}
+.muted{font-size:13px;color:var(--muted);text-align:center;margin-top:12px}
+a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="panel">
+<h2>Create recruiter account</h2>
+<div class="notice">⚠️ Recruiter accounts require <b>admin approval</b> before access.</div>
+<input id="name" placeholder="Full Name"/>
+<input id="company" placeholder="Company"/>
+<input id="email" type="email" placeholder="Email"/>
+<input id="password" type="password" placeholder="Password"/>
+<button id="registerBtn">Register</button>
+<p class="muted">Already registered? <a href="login.html">Sign in</a></p>
+</div>
+<script>
+document.getElementById("registerBtn").addEventListener("click",async function(){
+  const name=document.getElementById("name").value.trim();
+  const company=document.getElementById("company").value.trim();
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+  if(!name||!company||!email||!password)return alert("Fill all fields");
+  try{
+    const res=await fetch("http://localhost:5000/api/auth/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,company,email,password})});
+    const data=await res.json();
+    if(res.ok){alert(data.message||"Registered successfully");window.location="login.html";}
+    else alert(data.message||"Registration failed");
+  }catch(e){console.error(e);alert("Network error");}
+});
+</script>
+</body>
+</html>

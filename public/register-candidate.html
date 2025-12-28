@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Candidate Signup</title>
+<style>
+body{background:#071029;color:#fff;font-family:Inter}
+.box{max-width:420px;margin:80px auto;background:#0b1220;padding:30px;border-radius:12px}
+input,button{width:100%;padding:12px;margin-top:10px;border-radius:8px;border:none}
+button{background:#4f8cff;color:#fff;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>Candidate Registration</h2>
+<input id="name" placeholder="Name">
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="register()">Register</button>
+</div>
+
+<script>
+async function register(){
+  const body={
+    name:name.value,
+    email:email.value,
+    password:password.value,
+    role:"candidate"
+  };
+
+  const res=await fetch("/api/auth/register",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+
+  alert("Registered! Please login.");
+  location.href="login.html";
+}
+</script>
+</body>
+</html>
